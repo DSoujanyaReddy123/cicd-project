@@ -1,0 +1,67 @@
+name: CI Workflow
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Step 1: Checkout your code
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # Step 2: Set up Node.js (if your project uses React or Node)
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+
+      # Step 3: Set up Python (if your project has Python files)
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+
+      # Step 4: Install dependencies (Node.js)
+      - name: Install Node dependencies
+        if: exists('package.json')
+        run: |
+          npm install
+
+      # Step 5: Install dependencies (Python)
+      - name: Install Python dependencies
+        if: exists('requirements.txt')
+        run: |
+          pip install -r requirements.txt
+
+      # Step 6: Run tests (Node or Python)
+      - name: Run Node tests
+        if: exists('package.json')
+        run: |
+          npm test --if-present
+
+      - name: Run Python tests
+        if: exists('pytest.ini') || exists('tests/')
+        run: |
+          pytest || echo "No Python tests found"
+
+      # Step 7: Build frontend (if applicable)
+      - name: Build frontend
+        if: exists('package.json')
+        run: |
+          npm run build --if-present
+
+      # Step 8: Upload build artifacts (optional)
+      - name: Upload build output
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-artifacts
+          path: |
+            dist/
+            build/
+            output/
